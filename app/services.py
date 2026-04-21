@@ -1,6 +1,7 @@
 from .models import Package
+from .storage import packages
 from .storage import save_package, get_package as fetch_package
-from datetime import datetime
+from datetime import datetime, timezone
 
 VALID_TRANSITIONS = {
     "CREATED": ["IN_TRANSIT"],
@@ -10,7 +11,7 @@ VALID_TRANSITIONS = {
 }
 
 def create_package(data):
-    package_id = str(len(VALID_TRANSITIONS))  # simple for now
+    package_id = str(len(packages) + 1)
 
     package = Package(
         id=package_id,
@@ -19,6 +20,9 @@ def create_package(data):
     )
 
     save_package(package)
+
+    print("AFTER CREATE:", packages)  # 👈 add this
+
     return package.to_dict()
 
 def get_package(package_id):
@@ -26,6 +30,8 @@ def get_package(package_id):
     return package.to_dict() if package else None
 
 def update_status(package_id, new_status):
+    print("BEFORE UPDATE:", packages)  # 👈 add this
+
     package = fetch_package(package_id)
 
     if not package:
@@ -52,6 +58,6 @@ def update_location(package_id, new_location):
         return {"error": "Invalid location"}
 
     package.location = new_location
-    package.updated_at = datetime.utcnow()
+    package.updated_at = datetime.now(timezone.utc)
 
     return package.to_dict()
