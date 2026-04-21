@@ -24,3 +24,16 @@ def update(package_id):
                 return jsonify(result), 400
         
         return jsonify(result)
+
+
+@bp.route("/packages/<package_id>/location", methods=["PUT"])
+def update_package_location(package_id):
+    data = request.json
+    new_location = data.get("location")
+
+    result = update_location(package_id, new_location)
+
+    if "error" in result:
+        return jsonify(result), 400
+
+    return jsonify(result)
