@@ -1,7 +1,12 @@
 from .models import Package
-from .storage import packages
-from .storage import save_package, get_package as fetch_package
 from datetime import datetime, timezone
+from .storage import save_package, get_package as fetch_package, update_package, count_packages
+
+
+def serialize(doc):
+    if doc and "_id" in doc:
+        doc["_id"] = str(doc["_id"])
+    return doc
 
 VALID_TRANSITIONS = {
     "CREATED": ["IN_TRANSIT"],
@@ -11,37 +16,45 @@ VALID_TRANSITIONS = {
 }
 
 def create_package(data):
-    package_id = str(len(packages) + 1)
+    package_id = str(count_packages() + 1)
 
-    package = Package(
-        id=package_id,
-        status="CREATED",
-        location=data.get("location", "Warehouse")
-    )
+    package = {
+        "id": package_id,
+        "status": "CREATED",
+        "location": data.get("location", "Warehouse"),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
 
-    save_package(package)
+    result = save_package(package)
 
-    print("AFTER CREATE:", packages)  # 👈 add this
+    # 👇 fetch it back so it includes _id
+    saved = fetch_package(package_id)
+    saved["_id"] = str(saved["_id"])
 
-    return package.to_dict()
+    return serialize(saved)
 
 def get_package(package_id):
-    package = fetch_package(package_id)
-    return package.to_dict() if package else None
+    package = collection.find_one({"id": package_id})
+    if package:
+        package["_id"] = str(package["_id"])  # 🔥 fix here
+    return package
 
 def update_status(package_id, new_status):
-    print("BEFORE UPDATE:", packages)  # 👈 add this
-
     package = fetch_package(package_id)
 
     if not package:
         return {"error": "Package not found"}
 
-    if new_status not in VALID_TRANSITIONS[package.status]:
+    if new_status not in VALID_TRANSITIONS[package["status"]]:
         return {"error": "Invalid transition"}
 
-    package.status = new_status
-    return package.to_dict()
+    updates = {
+        "status": new_status,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+
+    update_package(package_id, updates)
+    return fetch_package(package_id)
 
 
 def update_location(package_id, new_location):
@@ -50,14 +63,19 @@ def update_location(package_id, new_location):
     if not package:
         return {"error": "Package not found"}
 
-    # Rule: delivered packages are frozen in time ❄️
-    if package.status == "DELIVERED":
+    if package["status"] == "DELIVERED":
         return {"error": "Cannot update location of a delivered package"}
 
     if not new_location:
         return {"error": "Invalid location"}
 
-    package.location = new_location
-    package.updated_at = datetime.now(timezone.utc)
+    updates = {
+        "location": new_location,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
 
-    return package.to_dict()
+    update_package(package_id, updates)
+    updated = fetch_package(package_id)
+    updated["_id"] = str(updated["_id"])
+
+    return updated
