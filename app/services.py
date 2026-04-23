@@ -34,10 +34,8 @@ def create_package(data):
     return serialize(saved)
 
 def get_package(package_id):
-    package = collection.find_one({"id": package_id})
-    if package:
-        package["_id"] = str(package["_id"])  # 🔥 fix here
-    return package
+    package = fetch_package(package_id)
+    return serialize(package)
 
 def update_status(package_id, new_status):
     package = fetch_package(package_id)
