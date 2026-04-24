@@ -50,3 +50,8 @@ def list_packages():
 def count():
     total = package_service.count_packages()
     return jsonify({"count": total}), 200
+
+@bp.route("/metrics", methods=["GET"])
+def metrics():
+    result = package_service.get_metrics()
+    return jsonify(result), 200

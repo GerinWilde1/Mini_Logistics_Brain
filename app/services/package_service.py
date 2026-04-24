@@ -26,6 +26,15 @@ def create_package(data):
 def get_package(package_id):
     return serialize(repo.find_by_id(package_id))
 
+def get_metrics():
+    total = repo.count_all()
+    by_status = repo.count_by_status()
+
+    return {
+        "total_packages": total,
+        "by_status": by_status
+    }
+
 
 def update_status(package_id, new_status):
     package = repo.find_by_id(package_id)

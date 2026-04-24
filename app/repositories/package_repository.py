@@ -12,9 +12,32 @@ def update_by_id(package_id, updates):
 def count():
     return collection.count_documents({})
 
-def find_all(status=None):
+def find_all(status=None, page=1, limit=10):
     query = {}
     if status:
         query["status"] = status
 
-    return list(collection.find(query))
+    cursor = collection.find(query) \
+        .skip((page - 1) * limit) \
+        .limit(limit)
+
+    results = []
+    for doc in cursor:
+        doc["_id"] = str(doc["_id"])
+        results.append(doc)
+
+    return results
+
+
+def count_all():
+    return collection.count_documents({})
+
+
+def count_by_status():
+    pipeline = [
+        {"$group": {"_id": "$status", "count": {"$sum": 1}}}
+    ]
+
+    results = list(collection.aggregate(pipeline))
+
+    return {r["_id"]: r["count"] for r in results}
