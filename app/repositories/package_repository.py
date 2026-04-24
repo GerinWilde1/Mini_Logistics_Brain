@@ -39,5 +39,4 @@ def count_by_status():
     ]
 
     results = list(collection.aggregate(pipeline))
-
     return {r["_id"]: r["count"] for r in results}

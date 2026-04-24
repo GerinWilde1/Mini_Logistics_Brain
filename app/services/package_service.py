@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from app.repositories import package_repository as repo
-from app.utils.serializer import serialize
+from app.utils import serialize
 import uuid
 
 VALID_TRANSITIONS = {
@@ -23,8 +23,8 @@ def create_package(data):
     return serialize(saved)
 
 
-def get_package(package_id):
-    return serialize(repo.find_by_id(package_id))
+def get_packages(status=None, page=1, limit=10):
+    return repo.find_all(status, page, limit)
 
 def get_metrics():
     total = repo.count_all()
@@ -63,3 +63,10 @@ def list_packages(status=None):
 
 def count_packages():
     return repo.count()
+
+
+def get_metrics():
+    return {
+        "total": repo.count_all(),
+        "by_status": repo.count_by_status()
+    }
