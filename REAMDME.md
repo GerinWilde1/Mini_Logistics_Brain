@@ -134,4 +134,4 @@ A production-style backend that:
 enforces business rules
 runs in Docker
 exposes a clean API
-demonstrates real engineering patterns
+demonstrates real engineering pattern.
